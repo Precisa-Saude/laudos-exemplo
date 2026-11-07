@@ -1,0 +1,368 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Exemplo: API de laudos estruturados</title>
+    <style>
+      /* A paleta da Precisa: areia de fundo, roxo profundo para texto e ação,
+         menta para destaque. Sem fonte própria: o exemplo é para ler, e a
+         fonte do sistema basta. */
+      :root {
+        --background: oklch(0.94 0.008 61);
+        --foreground: oklch(0.25 0.06 292);
+        --card: oklch(0.975 0.005 61);
+        --border: oklch(0.87 0.018 65);
+        --muted: oklch(0.92 0.012 61);
+        --muted-foreground: oklch(0.55 0.05 285);
+        --primary: oklch(0.39 0.082 292);
+        --primary-foreground: oklch(0.97 0.005 292);
+        --mint: oklch(0.9 0.085 181);
+        --amber: oklch(0.8 0.123 80);
+        --amber-soft: oklch(0.96 0.04 80);
+        --red: oklch(0.55 0.17 35);
+        --radius: 0.75rem;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 2.5rem 1rem 4rem;
+        background: var(--background);
+        color: var(--foreground);
+        font-family:
+          system-ui,
+          -apple-system,
+          'Segoe UI',
+          sans-serif;
+        line-height: 1.55;
+      }
+      main {
+        max-width: 60rem;
+        margin: 0 auto;
+      }
+      header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 1rem;
+      }
+      /* O seletor de idioma: dois botões num trilho, o ativo em roxo. */
+      .lang {
+        flex: none;
+        display: inline-flex;
+        padding: 0.2rem;
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        background: var(--card);
+      }
+      .lang button {
+        font-size: 0.8rem;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        color: var(--muted-foreground);
+        background: transparent;
+        padding: 0.3rem 0.8rem;
+        border-radius: 999px;
+      }
+      .lang button:hover {
+        opacity: 1;
+        color: var(--primary);
+      }
+      .lang button[aria-pressed='true'] {
+        color: var(--primary-foreground);
+        background: var(--primary);
+      }
+      h1 {
+        font-size: 1.75rem;
+        font-weight: 650;
+        letter-spacing: -0.01em;
+        margin: 0 0 0.5rem;
+      }
+      h1 small {
+        display: block;
+        font-size: 0.8rem;
+        font-weight: 600;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--muted-foreground);
+        margin-bottom: 0.5rem;
+      }
+      .lead {
+        color: var(--muted-foreground);
+        max-width: 42rem;
+        margin: 0 0 2rem;
+      }
+      a {
+        color: var(--primary);
+      }
+      code {
+        font-size: 0.9em;
+        background: var(--muted);
+        padding: 0.1em 0.35em;
+        border-radius: 0.3em;
+      }
+      .card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+      }
+      form {
+        display: grid;
+        gap: 1rem;
+        max-width: 30rem;
+      }
+      label {
+        display: grid;
+        gap: 0.35rem;
+        font-weight: 600;
+        font-size: 0.95rem;
+      }
+      .hint {
+        font-weight: 400;
+        color: var(--muted-foreground);
+      }
+      input[type='file'],
+      select {
+        font: inherit;
+        font-weight: 400;
+        color: var(--foreground);
+        background: var(--background);
+        border: 1px solid var(--border);
+        border-radius: 0.5rem;
+        padding: 0.55rem 0.75rem;
+      }
+      input[type='file']::file-selector-button {
+        font: inherit;
+        margin-right: 0.75rem;
+        padding: 0.3rem 0.75rem;
+        border: 1px solid var(--border);
+        border-radius: 0.4rem;
+        background: var(--card);
+        color: var(--primary);
+        cursor: pointer;
+      }
+      button {
+        justify-self: start;
+        font: inherit;
+        font-weight: 600;
+        color: var(--primary-foreground);
+        background: var(--primary);
+        border: 0;
+        border-radius: 999px;
+        padding: 0.6rem 1.4rem;
+        cursor: pointer;
+        transition: opacity 150ms ease;
+      }
+      button:hover {
+        opacity: 0.9;
+      }
+      button:disabled {
+        opacity: 0.55;
+        cursor: wait;
+      }
+      :is(button, select, input, summary):focus-visible {
+        outline: 2px solid var(--mint);
+        outline-offset: 2px;
+      }
+      #status {
+        min-height: 1.5rem;
+        margin: 0 0 1.5rem;
+        padding: 0.75rem 1rem;
+        border-radius: 0.6rem;
+        background: color-mix(in oklch, var(--mint) 35%, var(--card));
+        border: 1px solid color-mix(in oklch, var(--mint) 60%, var(--border));
+        font-weight: 600;
+        font-variant-numeric: tabular-nums;
+      }
+      #status:empty {
+        display: none;
+      }
+      #status.error {
+        color: var(--red);
+        background: color-mix(in oklch, var(--red) 8%, var(--card));
+        border-color: color-mix(in oklch, var(--red) 30%, var(--border));
+      }
+      /* O resumo: uma fileira de cartões pequenos, um por fato do envelope. */
+      #summary dl {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+        gap: 0.75rem;
+        margin: 0 0 1.5rem;
+      }
+      #summary div {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 0.9rem 1rem;
+      }
+      #summary dt {
+        font-size: 0.75rem;
+        font-weight: 600;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--muted-foreground);
+        margin-bottom: 0.25rem;
+      }
+      #summary dd {
+        margin: 0;
+        font-weight: 600;
+        overflow-wrap: anywhere;
+      }
+      .table-card {
+        padding: 0;
+        overflow-x: auto;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        font-variant-numeric: tabular-nums;
+      }
+      th,
+      td {
+        text-align: left;
+        padding: 0.65rem 1rem;
+        border-bottom: 1px solid var(--border);
+        vertical-align: top;
+      }
+      th {
+        font-size: 0.75rem;
+        font-weight: 600;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--muted-foreground);
+        background: var(--muted);
+      }
+      tbody tr:last-child td {
+        border-bottom: 0;
+      }
+      td:nth-child(2) {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 0.9em;
+      }
+      td:last-child {
+        font-weight: 600;
+      }
+      tr.abnormal td {
+        background: var(--amber-soft);
+      }
+      tr.abnormal td:last-child {
+        color: oklch(0.5 0.12 60);
+      }
+      .muted {
+        color: var(--muted-foreground);
+      }
+      .error {
+        color: var(--red);
+      }
+      details {
+        margin-top: 0.5rem;
+      }
+      summary {
+        cursor: pointer;
+        font-weight: 600;
+        color: var(--primary);
+      }
+      pre {
+        overflow: auto;
+        max-height: 32rem;
+        margin: 1rem 0 0;
+        padding: 1rem;
+        border-radius: 0.6rem;
+        background: oklch(0.39 0.082 292);
+        color: oklch(0.97 0.005 292);
+        font-size: 0.85rem;
+      }
+      [hidden] {
+        display: none;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        * {
+          transition: none !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <h1>
+          <small data-i18n="kicker">Precisa Saúde · exemplo de integração</small>
+          <span data-i18n="title">API de laudos estruturados</span>
+        </h1>
+        <div class="lang" role="group" aria-label="Idioma" data-i18n-label="languageLabel">
+          <button type="button" data-lang="pt-BR" aria-pressed="true">PT</button>
+          <button type="button" data-lang="en" aria-pressed="false">EN</button>
+        </div>
+      </header>
+      <p class="lead" data-i18n="lead">
+        Envie um laudo em PDF, JPEG ou PNG. A página manda o arquivo ao servidor deste exemplo, que
+        acrescenta a chave e repassa à API; depois consulta o trabalho até o Bundle FHIR ficar
+        pronto.
+      </p>
+
+      <div class="card">
+        <form id="form">
+          <label>
+            <span data-i18n="fileLabel">Laudo</span>
+            <input
+              type="file"
+              name="file"
+              accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
+              required
+            />
+          </label>
+          <label>
+            <span><span data-i18n="purposeLabel">Finalidade</span> (<code>purpose</code>)</span>
+            <select name="purpose">
+              <option value="care_coordination" data-i18n="purposes.care_coordination">
+                Coordenação do cuidado
+              </option>
+              <option value="member_self_service" data-i18n="purposes.member_self_service">
+                Autoatendimento do titular
+              </option>
+              <option value="clinical_quality" data-i18n="purposes.clinical_quality">
+                Qualidade clínica
+              </option>
+              <option value="research" data-i18n="purposes.research">Pesquisa</option>
+            </select>
+            <small class="hint" data-i18n="hint"
+              >Cada chave aceita só as finalidades do contrato dela.</small
+            >
+          </label>
+          <button type="submit" data-i18n="submit">Enviar</button>
+        </form>
+      </div>
+
+      <p id="status" aria-live="polite"></p>
+
+      <section id="result" hidden>
+        <div id="summary"></div>
+        <div class="card table-card">
+          <table id="observations">
+            <thead>
+              <tr>
+                <th data-i18n="th.name">Exame</th>
+                <th data-i18n="th.loinc">LOINC</th>
+                <th data-i18n="th.value">Valor</th>
+                <th data-i18n="th.range">Faixa de referência</th>
+                <th data-i18n="th.flag">Flag</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <p id="skipped" class="muted"></p>
+        <details>
+          <summary data-i18n="raw">Resposta completa (envelope e Bundle FHIR)</summary>
+          <pre id="raw"></pre>
+        </details>
+      </section>
+    </main>
+
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>

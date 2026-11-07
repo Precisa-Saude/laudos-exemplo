@@ -1,0 +1,55 @@
+name: CI/CD
+
+# Esta entrada pertence ao repositório. Triggers, permissões, flags de release
+# e jobs específicos são editados aqui. As implementações compartilhadas são
+# chamadas por SHA; o Renovate propõe atualizações com revisão e CI.
+# `.precisa.json` fornece os valores iniciais durante a criação do repositório.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'PR number for a manual review re-run'
+        required: false
+        type: number
+
+# Cada job declara apenas as permissões necessárias.
+permissions:
+  contents: read
+
+# Cancelar uma publicação pode deixar uma tag sem pacote no registry.
+# Cancelamento automático fica restrito aos PRs.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  # ── CI checks (every PR and push) ──────────────────────────────
+  checks:
+    permissions:
+      contents: read
+    uses: Precisa-Saude/tooling/.github/workflows/_checks.yml@a5723e9e4cd9886ecb9d2addfc4240914e0251c5 # v3.4.0
+
+  # ── Automated code review (PR, or manual dispatch, after checks) ─
+  review:
+    permissions:
+      contents: read
+      issues: read
+      pull-requests: write
+      models: read
+    needs: checks
+    if: >-
+      github.event_name == 'pull_request' ||
+      (github.event_name == 'workflow_dispatch' && inputs.pr_number > 0)
+    uses: Precisa-Saude/tooling/.github/workflows/review.yml@a5723e9e4cd9886ecb9d2addfc4240914e0251c5 # v3.4.0
+    with:
+      # Converte o valor recebido por workflow_dispatch para o tipo number.
+      pr_number: ${{ fromJSON(github.event.pull_request.number || inputs.pr_number || 0) }}
+    secrets:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}

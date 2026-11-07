@@ -1,0 +1,55 @@
+{
+  "name": "laudos-exemplo",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Exemplo mínimo de integração com a API de laudos estruturados da Precisa Saúde: envio do laudo, acompanhamento do trabalho e exibição do Bundle FHIR.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Precisa-Saude/laudos-exemplo.git"
+  },
+  "license": "MIT",
+  "author": "Precisa Saúde",
+  "type": "module",
+  "scripts": {
+    "build": "echo 'Nada a construir: o servidor roda o TypeScript direto.'",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint": "eslint . --max-warnings 0",
+    "prepare": "husky",
+    "start": "node --env-file-if-exists=.env server.ts",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "typecheck": "tsc --noEmit"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "prettier --write",
+      "eslint --fix --max-warnings 0 --no-warn-ignored"
+    ],
+    "*.{js,jsx,json,md,css,html,yml,yaml}": [
+      "prettier --write"
+    ]
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^20.5.0",
+    "@precisa-saude/agent-instructions": "3.4.0",
+    "@precisa-saude/commitlint-config": "3.4.0",
+    "@precisa-saude/eslint-config": "3.4.0",
+    "@precisa-saude/prettier-config": "3.4.0",
+    "@precisa-saude/tsconfig": "3.4.0",
+    "@types/node": "^22.10.0",
+    "@vitest/coverage-v8": "^2.1.8",
+    "eslint": "^10.1.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.4.0",
+    "prettier": "^3.4.2",
+    "prettier-plugin-packagejson": "^3.0.2",
+    "typescript": "~5.7.3",
+    "vitest": "^2.1.8"
+  },
+  "packageManager": "pnpm@9.15.9",
+  "engines": {
+    "node": ">=22.18",
+    "pnpm": ">=9"
+  }
+}

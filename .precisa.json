@@ -1,0 +1,16 @@
+{
+  "hasPackages": false,
+  "hasSite": false,
+  "nodeVersion": "22",
+  "pnpmVersion": "9.15.9",
+  "publishesToNpm": false,
+  "schemaVersion": 1,
+  "visibility": "oss",
+  "commitScopes": ["server", "web", "docs", "ci", "deps"],
+  "contactEmails": {
+    "conduct": "conduct@precisa-saude.com.br",
+    "security": "security@precisa-saude.com.br"
+  },
+  "name": "laudos-exemplo",
+  "owner": "Precisa-Saude"
+}

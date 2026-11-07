@@ -1,0 +1,26 @@
+name: Requisitos do repositório
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  requirements:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      # renovate: datasource=npm depName=@precisa-saude/cli
+      CLI_VERSION: '3.4.0'
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: '22'
+      - name: Verificar requisitos
+        run: npx --yes "@precisa-saude/cli@$CLI_VERSION" doctor
