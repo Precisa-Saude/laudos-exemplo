@@ -1,8 +1,8 @@
 {
-  "enabled": false,
-  "provider": "github-models",
-  "fallbackProviders": [],
-  "includePaths": ["*.ts", "public/**"],
+  "enabled": true,
+  "provider": "openrouter",
+  "fallbackProviders": ["anthropic"],
+  "includePaths": ["*.ts", "public/**", ".github/**", "README.md", "README.en.md"],
   "excludePaths": ["**/fixtures/**"],
   "scanForSecretsBeforeSending": true,
   "onSensitiveContent": "block"
